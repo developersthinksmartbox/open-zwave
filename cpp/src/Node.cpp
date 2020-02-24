@@ -1929,7 +1929,10 @@ void Node::ApplicationCommandHandler
 
 )
 {
-	if( CommandClass* pCommandClass = GetCommandClass( _data[5] ) )
+	uint8_t cc = GetDriver()->IsBridgeController() ? _data[6] : _data[5];
+	uint8_t startdata = GetDriver()->IsBridgeController() ? 7 : 6;
+	uint8_t lendata = GetDriver()->IsBridgeController() ? 5 : 4;
+	if (CommandClass* pCommandClass = GetCommandClass(cc))
 	{
 		if (pCommandClass->IsSecured() && !encrypted) {
 			Log::Write( LogLevel_Warning, m_nodeId, "Received a Clear Text Message for the CommandClass %s which is Secured", pCommandClass->GetCommandClassName().c_str());
@@ -1944,34 +1947,24 @@ void Node::ApplicationCommandHandler
 		}
 
 		pCommandClass->ReceivedCntIncr();
-		if (!pCommandClass->HandleMsg( &_data[6], _data[4] ) )
+		if (!pCommandClass->IsAfterMark())//BC this is new in dev branch
+		{
+			if (!pCommandClass->HandleMsg(&_data[startdata], _data[lendata]))
 		{
 			Log::Write( LogLevel_Warning, m_nodeId, "CommandClass %s HandlerMsg Returned False", pCommandClass->GetCommandClassName().c_str());
 		}
 	}
 	else if( CommandClass* pCommandClass = GetCommandClass( _data[5], true ) )
 	{
-		if (pCommandClass->IsSecured() && !encrypted) {
-			Log::Write( LogLevel_Warning, m_nodeId, "Received a Clear Text Message for the Advertised CommandClass %s which is Secured", pCommandClass->GetCommandClassName().c_str());
-			bool drop = true;
-			Options::Get()->GetOptionAsBool("EnforceSecureReception", &drop);
-			if (drop) {
-				Log::Write( LogLevel_Warning, m_nodeId, "   Dropping Message");
-				return;
-			} else {
-				Log::Write( LogLevel_Warning, m_nodeId, "   Allowing Message (EnforceSecureReception is not set)");
+			if (!pCommandClass->HandleIncomingMsg(&_data[startdata], _data[lendata]))//BC this is a biggish change on Dev
+			{
+				Log::Write(LogLevel_Warning, m_nodeId, "CommandClass %s HandleIncomingMsg Returned False", pCommandClass->GetCommandClassName().c_str());
 			}
-		}
-
-		pCommandClass->ReceivedCntIncr();
-		if (!pCommandClass->HandleIncomingMsg( &_data[6], _data[4] ) )
-		{
-			Log::Write (LogLevel_Warning, m_nodeId, "CommandClass %s HandleIncommingMsg returned false", pCommandClass->GetCommandClassName().c_str());
 		}
 	}
 	else
 	{
-		if( _data[5] == ControllerReplication::StaticGetCommandClassId() )
+		if (cc == ControllerReplication::StaticGetCommandClassId())
 		{
 			// This is a controller replication message, and we do not support it.
 			// We have to at least acknowledge the message to avoid locking the sending device.
@@ -1979,10 +1972,10 @@ void Node::ApplicationCommandHandler
 
 			Msg* msg = new Msg( "Replication Command Complete", m_nodeId, REQUEST, FUNC_ID_ZW_REPLICATION_COMMAND_COMPLETE, false );
 			GetDriver()->SendMsg( msg, Driver::MsgQueue_Command );
-		}
+		} //BC biggish else if here on Dev but probably nothing to do with Bridge Controller
 		else
 		{
-			Log::Write( LogLevel_Info, m_nodeId, "ApplicationCommandHandler - Unhandled Command Class 0x%.2x", _data[5] );
+			Log::Write(LogLevel_Info, m_nodeId, "ApplicationCommandHandler - Unhandled Command Class 0x%.2x", cc);
 		}
 	}
 }
