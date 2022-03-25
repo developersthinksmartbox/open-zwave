@@ -1912,7 +1912,7 @@ void Driver::ProcessMsg
 
 
 
-	if ((REQUEST == _data[0]) && ( ( FUNC_ID_APPLICATION_COMMAND_HANDLER == _data[1] ) || ( FUNC_ID_APPLICATION_COMMAND_HANDLER_BRIDGE == _data[1] ) ) && (Internal::CC::Security::StaticGetCommandClassId() == cc))
+	if ((REQUEST == _data[0]) && ( ( FUNC_ID_APPLICATION_COMMAND_HANDLER == _data[1] ) || ( FUNC_ID_APPLICATION_COMMAND_HANDLER_BRIDGE == _data[1] ) ) && (Security::StaticGetCommandClassId() == cc))
 	{
 		/* if this message is a NONCE Report - Then just Trigger the Encrypted Send */
 		if (SecurityCmd_NonceReport == cccmd)
@@ -1940,13 +1940,11 @@ void Driver::ProcessMsg
 				uint8 *nonce = NULL;
 				LockGuard LG(m_nodeMutex);
 				Node* nodeobj = GetNode(node);
-				if( node ) {
-				if (node)
+				if (nodeobj)
 				{
 					nonce = nodeobj->GenerateNonceKey();
-				} else {
-				}
-				else
+				} 
+				else 
 				{
 					Log::Write(LogLevel_Warning, node, "Couldn't Generate Nonce Key for Node %d", node);
 					return;
@@ -2505,10 +2503,7 @@ void Driver::ProcessMsg
 // <Driver::HandleGetVersionResponse>
 // Process a response from the Z-Wave PC interface
 //-----------------------------------------------------------------------------
-void Driver::HandleGetVersionResponse
-(
-		uint8* _data
-)
+void Driver::HandleGetVersionResponse(uint8* _data)
 {
 	m_libraryVersion = (char*)&_data[2];
 
@@ -2532,14 +2527,14 @@ void Driver::HandleGetVersionResponse
 		{
 			Notification* notification = new Notification(Notification::Type_DriverFailed);
 			notification->SetHomeAndNodeIds(m_homeId, m_currentMsg->GetTargetNodeId());
-			notification->SetComPort(m_controllerPath); //BC this line is new in the Dev Branch, possibly not supported?
+			//BC notification->SetComPort(m_controllerPath); //BC this line is new in the Dev Branch, possibly not supported?
 			QueueNotification(notification);
 		}
 		NotifyWatchers();
 		m_driverThread->Stop();
 	}
 	/* send the Next Initilization Message */                   
-	SendMsg(new Internal::Msg("FUNC_ID_ZW_MEMORY_GET_ID", 0xff, REQUEST, FUNC_ID_ZW_MEMORY_GET_ID, false), Driver::MsgQueue_Command); //BC this line is new in Dev Branch
+	SendMsg(new Msg("FUNC_ID_ZW_MEMORY_GET_ID", 0xff, REQUEST, FUNC_ID_ZW_MEMORY_GET_ID, false), Driver::MsgQueue_Command);
 	return;
 }
 
@@ -2620,8 +2615,7 @@ void Driver::HandleGetSerialAPICapabilitiesResponse
 	{
 		SendMsg( new Msg( "FUNC_ID_ZW_GET_VIRTUAL_NODES", 0xff, REQUEST, FUNC_ID_ZW_GET_VIRTUAL_NODES, false ), MsgQueue_Command);
 	}
-	if (IsAPICallSupported( FUNC_ID_ZW_GET_RANDOM)) //BC in original branch this is an else if
-
+	if (IsAPICallSupported( FUNC_ID_ZW_GET_RANDOM))
 	{
 		Msg *msg = new Msg( "FUNC_ID_ZW_GET_RANDOM", 0xff, REQUEST, FUNC_ID_ZW_GET_RANDOM, false );
 		msg->Append( 32 );      // 32 bytes
@@ -2644,7 +2638,7 @@ void Driver::HandleGetSerialAPICapabilitiesResponse
 	msg->Append( (uint8)advertisedCommandClasses.size() );			// Length
 	for (list<uint8>::iterator it = advertisedCommandClasses.begin(); it != advertisedCommandClasses.end(); ++it) {
 		msg->Append(*it);
-	//} //BC Dev branch had this closing bracket?
+	}
 	SendMsg( msg, MsgQueue_Command );
 }
 
