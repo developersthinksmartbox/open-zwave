@@ -1954,7 +1954,7 @@ void Node::ApplicationCommandHandler
 			Log::Write( LogLevel_Warning, m_nodeId, "CommandClass %s HandlerMsg Returned False", pCommandClass->GetCommandClassName().c_str());
 		}
 	}
-	else if( CommandClass* pCommandClass = GetCommandClass( _data[5], true ) )
+	else if( CommandClass* pCommandClass = GetCommandClass( cc, true ) )
 	{
 			if (!pCommandClass->HandleIncomingMsg(&_data[startdata], _data[lendata]))//BC this is a biggish change on Dev
 			{
