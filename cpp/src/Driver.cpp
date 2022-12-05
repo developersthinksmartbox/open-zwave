@@ -3674,7 +3674,7 @@ void Driver::HandleApplicationCommandHandlerRequest
 			memcpy( node->m_lastReceivedMessage, _data, sizeof(node->m_lastReceivedMessage) );
 		}
 		node->m_receivedTS.SetTime();
-		if ( ( ( m_expectedReply == FUNC_ID_APPLICATION_COMMAND_HANDLER ) || ( m_expectedReply = FUNC_ID_APPLICATION_COMMAND_HANDLER_BRIDGE) ) && ( m_expectedNodeId == nodeId ) )
+		if ( ( ( m_expectedReply == FUNC_ID_APPLICATION_COMMAND_HANDLER ) || ( m_expectedReply == FUNC_ID_APPLICATION_COMMAND_HANDLER_BRIDGE) ) && ( m_expectedNodeId == nodeId ) )
 		{
 			// Need to confirm this is the correct response to the last sent request.
 			// At least ignore any received messages prior to the send data request.
